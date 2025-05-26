@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Sheet Filler</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#ffffff" />
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 1rem;
+      max-width: 600px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+    }
+    textarea, input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.25rem;
+    }
+    button {
+      margin-top: 1.5rem;
+      padding: 0.75rem;
+      font-size: 1rem;
+      width: 100%;
+    }
+  </style>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').then(reg => {
+          console.log('Service worker registered:', reg);
+        }).catch(err => {
+          console.error('Service worker registration failed:', err);
+        });
+      });
+    }
+  </script>
+</head>
+<body>
+  <h2>Installation Worksheet</h2>
+  <form id="jobForm">
+    <label>Paste All Data (Customer Name, Address, Phone, Email, Products, SORD, WK):
+      <textarea name="combinedData" rows="10" placeholder="Enter one line per field in this order:
+Customer Name
+Address
+Phone
+Email
+Product 1
+...
+Product 10
+SORD Number
+WK Number (optional, starts with 'WK')" required></textarea>
+    </label>
+    <button type="submit">Generate PDF</button>
+  </form>
+
+  <script>
+    document.getElementById("jobForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const rawText = new FormData(this).get("combinedData").trim();
+      const lines = rawText.split("\n").map(line => line.trim()).filter(Boolean);
+
+      if (lines.length < 6 || lines.length > 14) {
+        alert("Please enter between 6 and 14 lines. Expected order: Name, Address, Phone, Email, up to 10 products, SORD, WK.");
+        return;
+      }
+
+      const [customerName, address, phone, email, ...rest] = lines;
+      const products = rest.slice(0, rest.length - 2);
+      const sord = rest[rest.length - 2];
+      const wk = rest[rest.length - 1];
+
+      const url = 'NEW JOB SHEET - 2024.pdf';
+      const existingPdfBytes = await fetch(url).then(res => res.arrayBuffer());
+
+      const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+      const page = pdfDoc.getPages()[0];
+      const { width, height } = page.getSize();
+      const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+      const drawText = (text, x, y, size = 12) => {
+        page.drawText(text, { x, y, size, font });
+      };
+
+      drawText(customerName, 120, height - 70);
+      drawText(address, 120, height - 90);
+      drawText(phone, 120, height - 110);
+      drawText(email, 120, height - 130);
+      drawText(sord, 390, height - 70);
+      if (wk.startsWith("WK")) drawText(wk, 390, height - 90);
+
+      let yStart = height - 180;
+      products.forEach((prod, i) => {
+        drawText(prod, 80, yStart - i * 15);
+      });
+
+      const pdfBytes = await pdfDoc.save();
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "filled-job-sheet.pdf";
+      link.click();
+    });
+  </script>
+</body>
+</html>
