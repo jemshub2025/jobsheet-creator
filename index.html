@@ -50,20 +50,20 @@
       const sordNumber = hasWK ? lines[lines.length - 2].trim() : lines[lines.length - 1].trim();
       const productLines = lines.slice(4, hasWK ? -2 : -1);
 
-      drawText(lines[0], 176.4, 192.24, 10); // Customer Name
-      drawText(sordNumber, 381.6, 192.24, 10); // SORD Number
-      drawText(lines[1], 176.4, 213.96, 10); // Address
-      drawText(lines[2], 176.4, 233.28, 10); // Phone
-      drawText(lines[3], 375.12, 233.28, 8); // Email
+      drawText(lines[0], 176.4, 649.76, 10);
+      drawText(sordNumber, 381.6, 649.76, 10);
+      drawText(lines[1], 176.4, 628.04, 10);
+      drawText(lines[2], 176.4, 608.72, 10);
+      drawText(lines[3], 375.12, 608.72, 8);
 
-      let y = 331.2;
+      let y = 510.8;
       for (let i = 0; i < productLines.length; i++) {
         drawText(productLines[i], 59.4, y, 8);
-        y += 19;
+        y -= 19;
       }
 
       if (wkNumber) {
-        drawText(wkNumber, 381.6, 170.76, 10);
+        drawText(wkNumber, 381.6, 671.24, 10);
       }
 
       const customerName = lines[0].trim();
