@@ -56,28 +56,27 @@
       const existingPdfBytes = await fetch('NEW JOB SHEET - 2024.pdf').then(res => res.arrayBuffer());
       const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
       const page = pdfDoc.getPages()[0];
-      const { width, height } = page.getSize();
       const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-      const drawText = (text, x, y) => {
+      // Draw each field based on uploaded CSV coordinates
+      const drawText = (text, x, y, size = 10) => {
         page.drawText(text || '', {
           x, y,
-          size: 12,
+          size,
           font
         });
       };
 
-      drawText(lines[0], 50, 620); // Customer Name
-      drawText(lines[lines.length - 2], 300, 620); // SORD Number
-      drawText(lines[1], 50, 590); // Address
-      drawText(lines[2], 50, 560); // Phone
-      drawText(lines[3], 300, 560); // Email
+      drawText(lines[0], 176.4, 649.44, 10); // Customer Name
+      drawText(lines[lines.length - 2], 381.6, 649.44, 10); // SORD Number
+      drawText(lines[lines.length - 1], 384.48, 671.04, 10); // WK Number
+      drawText(lines[1], 176.4, 629.28, 10); // Address
+      drawText(lines[2], 176.4, 608.4, 10); // Phone Number
+      drawText(lines[3], 300, 608.4, 10); // Email (estimated position)
 
       for (let i = 4; i < 14 && i < lines.length - 2; i++) {
-        drawText(lines[i], 50, 490 - (i - 4) * 20); // Products
+        drawText(lines[i], 176.4, 570 - (i - 4) * 18, 10); // Product lines
       }
-
-      drawText(lines[lines.length - 1], 50, 450); // WK Number (optional)
 
       const pdfBytes = await pdfDoc.save();
 
@@ -87,7 +86,7 @@
 
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const pdfUrl = URL.createObjectURL(blob);
-      window.open(pdfUrl); // Open in new tab
+      window.open(pdfUrl);
 
       const link = document.createElement('a');
       link.href = pdfUrl;
