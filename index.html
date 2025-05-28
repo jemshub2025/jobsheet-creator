@@ -67,23 +67,23 @@
         });
       };
 
-      drawText(lines[0], 50, height - 50); // Customer Name
-      drawText(lines[1], 50, height - 70); // Address
-      drawText(lines[2], 50, height - 90); // Phone
-      drawText(lines[3], 50, height - 110); // Email
+      drawText(lines[0], 50, 620); // Customer Name
+      drawText(lines[lines.length - 2], 300, 620); // SORD Number
+      drawText(lines[1], 50, 590); // Address
+      drawText(lines[2], 50, 560); // Phone
+      drawText(lines[3], 300, 560); // Email
 
       for (let i = 4; i < 14 && i < lines.length - 2; i++) {
-        drawText(lines[i], 50, height - (130 + (i - 4) * 20));
+        drawText(lines[i], 50, 490 - (i - 4) * 20); // Products
       }
 
-      drawText(lines[lines.length - 2], 400, height - 50); // SORD
-      drawText(lines[lines.length - 1], 400, height - 70); // WK (optional)
+      drawText(lines[lines.length - 1], 50, 450); // WK Number (optional)
 
       const pdfBytes = await pdfDoc.save();
 
-      const customerName = lines[0].trim().replace(/\s+/g, '-');
+      const customerName = lines[0].trim();
       const sordNumber = lines[lines.length - 2].trim();
-      const filename = `${customerName}_${sordNumber}_Installation-Worksheet.pdf`;
+      const filename = `${customerName} ${sordNumber} Installation Worksheet.pdf`.replace(/[<>:"/\\|?*]/g, '');
 
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
       const pdfUrl = URL.createObjectURL(blob);
