@@ -4,35 +4,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Job Sheet Filler</title>
-  <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#ffffff" />
+  <title>Job Sheet Debugger</title>
   <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
   <style>
     body { font-family: Arial, sans-serif; padding: 1rem; max-width: 600px; margin: auto; }
-    label { display: block; margin-top: 1rem; }
-    textarea, input { width: 100%; padding: 0.5rem; margin-top: 0.25rem; }
-    button { margin-top: 1.5rem; padding: 0.75rem; font-size: 1rem; width: 100%; }
+    textarea { width: 100%; height: 300px; }
+    button { margin-top: 1rem; padding: 0.5rem; font-size: 1rem; width: 100%; }
   </style>
 </head>
 <body>
-  <h1>Job Sheet Filler</h1>
-  <label for="data">Paste all data (one line per field):</label>
-  <textarea id="data" rows="25" placeholder="Customer Name\nAddress\nPhone\nEmail\nProduct 1...\nSORD Number\nWK Number (optional)"></textarea>
-  <button onclick="generatePDF()">Generate PDF</button>
+  <h2>Job Sheet PDF Position Debugger</h2>
+  <p>Paste one line per field. Each line will be numbered and printed in sequence down the page so you can visually align them.</p>
+  <textarea id="inputText" placeholder="Line 1\nLine 2\nLine 3..."></textarea>
+  <button onclick="generatePDF()">Generate Debug PDF</button>
 
   <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js');
-      });
-    }
-
     async function generatePDF() {
-      const input = document.getElementById('data').value.trim();
-      const lines = input.split('\n');
-      if (lines.length < 6) {
-        alert("Not enough lines of input.");
+      const lines = document.getElementById('inputText').value.trim().split('\n');
+      if (!lines.length) {
+        alert("Please enter some lines to debug.");
         return;
       }
 
@@ -41,41 +31,27 @@
       const page = pdfDoc.getPages()[0];
       const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-      const drawText = (text, x, y, size = 10) => {
-        page.drawText(text || '', { x, y, size, font });
-      };
-
-      const hasWK = lines[lines.length - 1].toLowerCase().startsWith("wk");
-      const wkNumber = hasWK ? lines[lines.length - 1].trim() : "";
-      const sordNumber = hasWK ? lines[lines.length - 2].trim() : lines[lines.length - 1].trim();
-      const productLines = lines.slice(4, hasWK ? -2 : -1);
-
-      drawText(lines[0], 176.4, 649.76, 10);
-      drawText(sordNumber, 381.6, 649.76, 10);
-      drawText(lines[1], 176.4, 628.04, 10);
-      drawText(lines[2], 176.4, 608.72, 10);
-      drawText(lines[3], 375.12, 608.72, 8);
-
-      let y = 510.8;
-      for (let i = 0; i < productLines.length; i++) {
-        drawText(productLines[i], 59.4, y, 8);
-        y -= 19;
+      let y = 800;
+      for (let i = 0; i < lines.length; i++) {
+        const text = `${i + 1}. ${lines[i]}`;
+        page.drawText(text, {
+          x: 50,
+          y: y,
+          size: 10,
+          font: font
+        });
+        y -= 40; // 40pt spacing for clear separation
       }
 
-      if (wkNumber) {
-        drawText(wkNumber, 381.6, 671.24, 10);
-      }
-
-      const customerName = lines[0].trim();
-      const filename = `${customerName} ${sordNumber} Installation Worksheet.pdf`.replace(/[<>:"/\\|?*]/g, '');
       const pdfBytes = await pdfDoc.save();
       const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const pdfUrl = URL.createObjectURL(blob);
-      window.open(pdfUrl);
-      const link = document.createElement('a');
-      link.href = pdfUrl;
-      link.download = filename;
-      link.click();
+      const url = URL.createObjectURL(blob);
+      window.open(url);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "debug-job-sheet.pdf";
+      a.click();
     }
   </script>
 </body>
