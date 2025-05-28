@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,84 +31,69 @@
       width: 100%;
     }
   </style>
+</head>
+<body>
+  <h1>Job Sheet Filler</h1>
+  <label for="data">Paste all data (one line per field):</label>
+  <textarea id="data" rows="15" placeholder="Customer Name\nAddress\nPhone\nEmail\nProduct 1...\nSORD Number\nWK Number (optional)"></textarea>
+  <button onclick="generatePDF()">Generate PDF</button>
+
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').then(reg => {
-          console.log('Service worker registered:', reg);
-        }).catch(err => {
-          console.error('Service worker registration failed:', err);
-        });
+        navigator.serviceWorker.register('sw.js');
       });
     }
-  </script>
-</head>
-<body>
-  <h2>Installation Worksheet</h2>
-  <form id="jobForm">
-    <label>Paste All Data (Customer Name, Address, Phone, Email, Products, SORD, WK):
-      <textarea name="combinedData" rows="10" placeholder="Enter one line per field in this order:
-Customer Name
-Address
-Phone
-Email
-Product 1
-...
-Product 10
-SORD Number
-WK Number (optional, starts with 'WK')" required></textarea>
-    </label>
-    <button type="submit">Generate PDF</button>
-  </form>
 
-  <script>
-    document.getElementById("jobForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      const rawText = new FormData(this).get("combinedData").trim();
-      const lines = rawText.split("\n").map(line => line.trim()).filter(Boolean);
-
-      if (lines.length < 6 || lines.length > 14) {
-        alert("Please enter between 6 and 14 lines. Expected order: Name, Address, Phone, Email, up to 10 products, SORD, WK.");
+    async function generatePDF() {
+      const input = document.getElementById('data').value.trim();
+      const lines = input.split('\n');
+      if (lines.length < 6) {
+        alert("Not enough lines of input.");
         return;
       }
 
-      const [customerName, address, phone, email, ...rest] = lines;
-      const products = rest.slice(0, rest.length - 2);
-      const sord = rest[rest.length - 2];
-      const wk = rest[rest.length - 1];
-
-      const url = 'NEW JOB SHEET - 2024.pdf';
-      const existingPdfBytes = await fetch(url).then(res => res.arrayBuffer());
-
+      const existingPdfBytes = await fetch('NEW JOB SHEET - 2024.pdf').then(res => res.arrayBuffer());
       const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
       const page = pdfDoc.getPages()[0];
       const { width, height } = page.getSize();
       const font = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
 
-      const drawText = (text, x, y, size = 12) => {
-        page.drawText(text, { x, y, size, font });
+      const drawText = (text, x, y) => {
+        page.drawText(text || '', {
+          x, y,
+          size: 12,
+          font
+        });
       };
 
-      drawText(customerName, 120, height - 70);
-      drawText(address, 120, height - 90);
-      drawText(phone, 120, height - 110);
-      drawText(email, 120, height - 130);
-      drawText(sord, 390, height - 70);
-      if (wk.startsWith("WK")) drawText(wk, 390, height - 90);
+      drawText(lines[0], 50, height - 50); // Customer Name
+      drawText(lines[1], 50, height - 70); // Address
+      drawText(lines[2], 50, height - 90); // Phone
+      drawText(lines[3], 50, height - 110); // Email
 
-      let yStart = height - 180;
-      products.forEach((prod, i) => {
-        drawText(prod, 80, yStart - i * 15);
-      });
+      for (let i = 4; i < 14 && i < lines.length - 2; i++) {
+        drawText(lines[i], 50, height - (130 + (i - 4) * 20));
+      }
+
+      drawText(lines[lines.length - 2], 400, height - 50); // SORD
+      drawText(lines[lines.length - 1], 400, height - 70); // WK (optional)
 
       const pdfBytes = await pdfDoc.save();
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "filled-job-sheet.pdf";
+
+      const customerName = lines[0].trim().replace(/\s+/g, '-');
+      const sordNumber = lines[lines.length - 2].trim();
+      const filename = `${customerName}_${sordNumber}_Installation-Worksheet.pdf`;
+
+      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+      const pdfUrl = URL.createObjectURL(blob);
+      window.open(pdfUrl); // Open in new tab
+
+      const link = document.createElement('a');
+      link.href = pdfUrl;
+      link.download = filename;
       link.click();
-    });
+    }
   </script>
 </body>
 </html>
